@@ -5,10 +5,11 @@ const authRoutes = require("./routes/authRoutes");
 const ebookRoutes = require("./routes/ebookRoutes");
 const bookmarkRoutes = require("./routes/bookmarkRoutes");
 const purchaseRoutes = require("./routes/purchaseRoutes");
-
+const userRoutes = require("./routes/userRoutes");
 const app = express();
 
 
+app.use("/api/users", userRoutes);
 app.use("/api/purchase", purchaseRoutes);
 app.use(cors());
 app.use(express.json());
