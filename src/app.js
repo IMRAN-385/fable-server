@@ -6,20 +6,18 @@ const ebookRoutes = require("./routes/ebookRoutes");
 const bookmarkRoutes = require("./routes/bookmarkRoutes");
 const purchaseRoutes = require("./routes/purchaseRoutes");
 const userRoutes = require("./routes/userRoutes");
+
 const app = express();
 
-
-app.use("/api/users", userRoutes);
-app.use("/api/purchase", purchaseRoutes);
-app.use(cors());
+app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/ebooks", ebookRoutes);
 app.use("/api/bookmark", bookmarkRoutes);
+app.use("/api/purchase", purchaseRoutes);
+app.use("/api/users", userRoutes);
 
-app.get("/", (req, res) => {
-  res.send("Fable Server Running");
-});
+app.get("/", (req, res) => res.send("Fable Server Running"));
 
 module.exports = app;
