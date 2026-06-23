@@ -8,9 +8,8 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
-    const { search, genre, minPrice, maxPrice, availability, sort, page = 1, limit = 9 } = req.query;
+    const { search, genre, minPrice, maxPrice, availability, sort, page = 1, limit = 9, writerId } = req.query;
     const query = {};
-
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
@@ -18,6 +17,7 @@ router.get("/", async (req, res) => {
       ];
     }
     if (genre) query.genre = genre;
+    if (writerId) query.writerId = writerId;
     if (availability === "available") query.status = { $ne: "sold" };
     else if (availability === "sold") query.status = "sold";
     if (minPrice || maxPrice) {
@@ -25,27 +25,17 @@ router.get("/", async (req, res) => {
       if (minPrice) query.price.$gte = Number(minPrice);
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
-
     let sortOption = { createdAt: -1 };
     if (sort === "price_low") sortOption = { price: 1 };
     if (sort === "price_high") sortOption = { price: -1 };
-
     const pageNum = Number(page);
     const limitNum = Number(limit);
     const skip = (pageNum - 1) * limitNum;
-
     const [ebooks, total] = await Promise.all([
       Ebook.find(query).sort(sortOption).skip(skip).limit(limitNum),
       Ebook.countDocuments(query),
     ]);
-
-    res.json({
-      success: true,
-      ebooks,
-      totalPages: Math.ceil(total / limitNum),
-      currentPage: pageNum,
-      totalEbooks: total,
-    });
+    res.json({ success: true, ebooks, totalPages: Math.ceil(total / limitNum), currentPage: pageNum, totalEbooks: total });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -55,10 +45,8 @@ router.get("/:id", async (req, res) => {
   try {
     const ebook = await Ebook.findById(req.params.id);
     if (!ebook) return res.status(404).json({ message: "Ebook not found" });
-
     let isOwner = false;
     let isPurchasedByUser = false;
-
     const authHeader = req.headers.authorization;
     if (authHeader) {
       try {
@@ -69,7 +57,6 @@ router.get("/:id", async (req, res) => {
         isPurchasedByUser = !!purchase;
       } catch {}
     }
-
     res.json({ success: true, ebook, isOwner, isPurchasedByUser });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -89,9 +76,8 @@ router.put("/:id", verifyToken, async (req, res) => {
   try {
     const ebook = await Ebook.findById(req.params.id);
     if (!ebook) return res.status(404).json({ message: "Ebook not found" });
-    if (ebook.writerId.toString() !== req.user.id && req.user.role !== "admin") {
+    if (ebook.writerId.toString() !== req.user.id && req.user.role !== "admin")
       return res.status(403).json({ message: "Access denied" });
-    }
     const updated = await Ebook.findByIdAndUpdate(req.params.id, req.body, { new: true });
     res.json({ success: true, ebook: updated });
   } catch (error) {
@@ -103,9 +89,8 @@ router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const ebook = await Ebook.findById(req.params.id);
     if (!ebook) return res.status(404).json({ message: "Ebook not found" });
-    if (ebook.writerId.toString() !== req.user.id && req.user.role !== "admin") {
+    if (ebook.writerId.toString() !== req.user.id && req.user.role !== "admin")
       return res.status(403).json({ message: "Access denied" });
-    }
     await Ebook.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: "Ebook deleted" });
   } catch (error) {
