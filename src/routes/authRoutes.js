@@ -154,4 +154,42 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = router;// Google Login
+router.post("/google", async (req, res) => {
+  try {
+    const { name, email, photo } = req.body;
+    if (!email) return res.status(400).json({ message: "Email required" });
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        password: await bcrypt.hash(Math.random().toString(36), 10),
+        photo: photo || "",
+        role: "user",
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        photo: user.photo,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
