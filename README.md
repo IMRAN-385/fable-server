@@ -1,68 +1,86 @@
-# Fable – Ebook Sharing Platform
+# Fable – Backend API
 
-A modern digital platform connecting ebook lovers with talented writers. Browse, discover, purchase, and read original ebooks from emerging authors worldwide.
+Express.js REST API for the Fable ebook sharing platform.
 
-## 🌐 Live URL
+## 🌐 Live API URL
 
-[https://fable-client-azure.vercel.app](https://fable-client-azure.vercel.app)
+[https://fable-server-8aqu.onrender.com](https://fable-server-8aqu.onrender.com)
 
-## 📌 Purpose
+## 🔗 Frontend Repository
 
-Fable democratizes access to literature by enabling writers to publish and sell original ebooks directly to readers. The platform features role-based dashboards for readers, writers, and admins — with full payment integration, bookmark system, and real-time analytics.
+[https://github.com/IMRAN-385/fable-client](https://github.com/IMRAN-385/fable-client)
 
 ## ✨ Key Features
 
-- 🔐 JWT Authentication (Email/Password + Google OAuth)
-- 👤 Role-based access: Reader, Writer, Admin
-- 📚 Browse, search, filter, sort & paginate ebooks
-- 💳 Stripe payment integration for ebook purchases
-- 🔖 Bookmark system for saving ebooks
-- 📊 Admin analytics dashboard with charts
-- 🖊️ Writer dashboard: add, edit, publish/unpublish ebooks
-- 🖼️ imgBB API for cover image uploads
-- ⚡ Framer Motion animations throughout
-- 📱 Fully responsive design
-- 🌀 Loading screen with counter animation
-- 💀 Skeleton loaders for all data-fetching states
-- 🚫 Custom 404 error page
+- JWT Authentication with bcrypt password hashing
+- Role-based middleware (user / writer / admin)
+- Google OAuth sync endpoint
+- Full CRUD for ebooks with ownership checks
+- Stripe Checkout session + payment confirmation
+- Purchase history, sales history, all transactions
+- Bookmark add/remove
+- Admin analytics (monthly sales, genre breakdown)
+- Top writers aggregation pipeline
+- Search, filter, sort, pagination on ebooks
 
 ## 🛠️ NPM Packages Used
 
 | Package | Purpose |
 |---|---|
-| `next` | React framework (App Router) |
-| `react` | UI library |
-| `framer-motion` | Animations |
-| `next-auth` | Google OAuth |
-| `tailwindcss` | Utility-first CSS |
-| `@tailwindcss/postcss` | Tailwind PostCSS plugin |
+| `express` | Web framework |
+| `mongoose` | MongoDB ODM |
+| `jsonwebtoken` | JWT auth |
+| `bcryptjs` | Password hashing |
+| `stripe` | Payment processing |
+| `cors` | Cross-origin requests |
+| `dotenv` | Environment variables |
+| `nodemon` | Dev auto-restart |
 
 ## 🔑 Environment Variables
 
-Create a `.env.local` file in the root:
+Create a `.env` file in the root:
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000
-NEXT_PUBLIC_IMGBB_KEY=your_imgbb_api_key
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-NEXTAUTH_SECRET=your_random_secret
-NEXTAUTH_URL=http://localhost:3000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+STRIPE_SECRET_KEY=sk_test_your_stripe_key
+CLIENT_URL=http://localhost:3000
+PORT=5000
 ```
 
 ## 🚀 Getting Started
 
 ```bash
 npm install
-npm run dev
+npm run dev        # development
+npm start          # production
+npm run create-admin  # create admin@fable.com account
 ```
 
-## 👤 Test Credentials
+## 📁 API Routes
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | admin@fable.com | Admin@123 |
-| Writer | writer@fable.com | writer123 |
-| Reader | reader@fable.com | reader123 |
+| Method | Route | Auth | Description |
+|---|---|---|---|
+| POST | /api/auth/register | Public | Register user |
+| POST | /api/auth/login | Public | Login user |
+| GET | /api/auth/profile | JWT | Get profile |
+| POST | /api/auth/google | Public | Google OAuth sync |
+| GET | /api/ebooks | Public | List ebooks (search/filter/sort/paginate) |
+| GET | /api/ebooks/:id | Public | Single ebook details |
+| POST | /api/ebooks | Writer/Admin | Create ebook |
+| PUT | /api/ebooks/:id | Owner/Admin | Update ebook |
+| DELETE | /api/ebooks/:id | Owner/Admin | Delete ebook |
+| POST | /api/purchase/create-checkout-session | JWT | Create Stripe session |
+| POST | /api/purchase/confirm | JWT | Confirm payment |
+| GET | /api/purchase/my-purchases | JWT | User purchase history |
+| GET | /api/purchase/my-sales | Writer | Writer sales history |
+| GET | /api/purchase/all | Admin | All transactions |
+| POST | /api/bookmark/:ebookId | JWT | Add bookmark |
+| DELETE | /api/bookmark/:ebookId | JWT | Remove bookmark |
+| GET | /api/users/top-writers | Public | Top 3 writers by sales |
+| GET | /api/users/analytics | Admin | Platform analytics |
+| GET | /api/users | Admin | All users |
+| PATCH | /api/users/:id/role | Admin | Change user role |
+| DELETE | /api/users/:id | Admin | Delete user |
 
-## 📁 Project Structure
+## 👤 Admin Account
