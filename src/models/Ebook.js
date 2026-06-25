@@ -19,7 +19,16 @@ const ebookSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // Short public preview/blurb — always visible, even to guests.
     description: {
+      type: String,
+      required: true,
+    },
+    // ✅ FIX: this is the actual book content. Previously the same
+    // `description` was shown both before AND after purchase, so paying
+    // unlocked nothing. Now this field is only ever sent to the owner,
+    // an admin, or someone who has actually purchased the book.
+    fullContent: {
       type: String,
       required: true,
     },
@@ -33,7 +42,7 @@ const ebookSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["published", "unpublished", "sold" ],
+      enum: ["published", "unpublished", "sold"],
       default: "published",
     },
   },

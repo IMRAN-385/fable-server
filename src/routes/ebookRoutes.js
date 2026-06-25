@@ -26,13 +26,16 @@ router.get("/", async (req, res) => {
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
     let sortOption = { createdAt: -1 };
-    if (sort === "price_low") sortOption = { price: 1 };
-    if (sort === "price_high") sortOption = { price: -1 };
+    if (sort === "price_low" || sort === "price_asc") sortOption = { price: 1 };
+    if (sort === "price_high" || sort === "price_desc") sortOption = { price: -1 };
     const pageNum = Number(page);
     const limitNum = Number(limit);
     const skip = (pageNum - 1) * limitNum;
+
+    // ✅ FIX: never send fullContent in list views — nobody needs the
+    // entire book just to render a grid of cards.
     const [ebooks, total] = await Promise.all([
-      Ebook.find(query).sort(sortOption).skip(skip).limit(limitNum),
+      Ebook.find(query).select("-fullContent").sort(sortOption).skip(skip).limit(limitNum),
       Ebook.countDocuments(query),
     ]);
     res.json({ success: true, ebooks, totalPages: Math.ceil(total / limitNum), currentPage: pageNum, totalEbooks: total });
@@ -45,19 +48,34 @@ router.get("/:id", async (req, res) => {
   try {
     const ebook = await Ebook.findById(req.params.id);
     if (!ebook) return res.status(404).json({ message: "Ebook not found" });
+
     let isOwner = false;
     let isPurchasedByUser = false;
+    let isAdmin = false;
+
     const authHeader = req.headers.authorization;
     if (authHeader) {
       try {
         const token = authHeader.split(" ")[1];
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         isOwner = ebook.writerId.toString() === decoded.id;
-        const purchase = await Purchase.findOne({ userId: decoded.id, ebookId: ebook._id });
+        isAdmin = decoded.role === "admin";
+        const purchase = await Purchase.findOne({ userId: decoded.id, ebookId: ebook._id, type: "purchase" });
         isPurchasedByUser = !!purchase;
       } catch {}
     }
-    res.json({ success: true, ebook, isOwner, isPurchasedByUser });
+
+    // ✅ FIX: this is the actual paywall. Previously the same `description`
+    // field was shown to everyone before AND after purchase — paying did
+    // nothing. Now `fullContent` is stripped out of the response unless
+    // the caller is the owner, an admin, or has actually bought the book.
+    const canSeeFullContent = isOwner || isAdmin || isPurchasedByUser;
+    const ebookObj = ebook.toObject();
+    if (!canSeeFullContent) {
+      delete ebookObj.fullContent;
+    }
+
+    res.json({ success: true, ebook: ebookObj, isOwner, isPurchasedByUser });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

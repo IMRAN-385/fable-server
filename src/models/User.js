@@ -20,6 +20,18 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "writer", "admin"],
       default: "user",
     },
+    // ✅ NEW: spec requires writers to pay a one-time verification fee
+    // before they get writer privileges. We no longer hand out the
+    // "writer" role at registration time — we park the request here
+    // until payment is confirmed (see purchaseRoutes.js).
+    pendingWriter: {
+      type: Boolean,
+      default: false,
+    },
+    writerVerified: {
+      type: Boolean,
+      default: false,
+    },
     photo: {
       type: String,
       default: "",
