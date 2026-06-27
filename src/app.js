@@ -16,7 +16,7 @@ app.use(
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://fable-client-azure.vercel.app",
+  "https://fable-client-mu.vercel.app",
   process.env.CLIENT_URL,
 ].filter(Boolean);
 

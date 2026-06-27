@@ -7,8 +7,7 @@ const purchaseSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    // ebookId is only set for actual ebook purchases.
-    // For writer-verification (publishing) fees, this stays null.
+   
     ebookId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ebook",
@@ -18,10 +17,7 @@ const purchaseSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    // ✅ FIX: this field did not exist before, but routes were querying
-    // Purchase.countDocuments({ type: "purchase" }) and aggregating on it.
-    // Without this field every "totalSold" / "top writers" / "monthly sales"
-    // calculation silently returned 0 / empty.
+    
     type: {
       type: String,
       enum: ["purchase", "publishing_fee"],

@@ -11,13 +11,8 @@ const getStripe = () => {
   return require("stripe")(process.env.STRIPE_SECRET_KEY);
 };
 
-// One-time fee a "user" must pay to be promoted to "writer".
-// Configurable via env so it's not hardcoded in two places.
 const WRITER_VERIFICATION_FEE = Number(process.env.WRITER_VERIFICATION_FEE || 10);
 
-// ---------------------------------------------------------------
-// Buy an ebook
-// ---------------------------------------------------------------
 router.post("/create-checkout-session", verifyToken, async (req, res) => {
   try {
     const stripe = getStripe();
@@ -42,8 +37,7 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
       }],
       success_url: `${process.env.CLIENT_URL}/payment?session_id={CHECKOUT_SESSION_ID}&ebookId=${ebook._id}&type=purchase`,
       cancel_url: `${process.env.CLIENT_URL}/ebooks/${ebook._id}`,
-      // ✅ FIX: type added to metadata so /confirm can tell this apart
-      // from a writer-verification-fee session below.
+      
       metadata: { type: "purchase", ebookId: ebook._id.toString(), userId: req.user.id },
     });
 
@@ -53,9 +47,7 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
   }
 });
 
-// ---------------------------------------------------------------
-// ✅ NEW: pay the one-time writer-verification fee
-// ---------------------------------------------------------------
+
 router.post("/writer-verification-session", verifyToken, async (req, res) => {
   try {
     const stripe = getStripe();
@@ -86,9 +78,7 @@ router.post("/writer-verification-session", verifyToken, async (req, res) => {
   }
 });
 
-// ---------------------------------------------------------------
-// Confirm payment (shared by both flows above)
-// ---------------------------------------------------------------
+
 router.post("/confirm", verifyToken, async (req, res) => {
   try {
     const stripe = getStripe();
@@ -99,9 +89,7 @@ router.post("/confirm", verifyToken, async (req, res) => {
 
     const { type, userId } = session.metadata;
 
-    // ✅ FIX: this was already checked before, keep it — never trust the
-    // body's userId, always cross-check against the session that Stripe
-    // actually paid out, and against the logged-in user making the call.
+    
     if (userId !== req.user.id)
       return res.status(403).json({ message: "Access denied" });
 
@@ -120,7 +108,7 @@ router.post("/confirm", verifyToken, async (req, res) => {
       return res.json({ success: true, message: "Writer verification complete" });
     }
 
-    // default: ebook purchase
+  
     const { ebookId } = session.metadata;
     const alreadyPurchased = await Purchase.findOne({ userId, ebookId, type: "purchase" });
     if (alreadyPurchased) return res.json({ success: true, message: "Already recorded" });

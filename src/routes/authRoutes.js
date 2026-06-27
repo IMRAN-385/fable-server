@@ -34,13 +34,7 @@ router.post("/register", async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ FIX: previously `role` from the request body was trusted directly,
-    // so choosing "Publish ebooks" on registration instantly made someone
-    // a writer with zero verification/payment — contradicts the spec
-    // ("writers can upload after a one-time verification payment").
-    // Now everyone starts as role "user". If they asked for "writer",
-    // we just remember that intent in `pendingWriter` so the frontend can
-    // route them to the verification-payment page next.
+
     const wantsWriter = role === "writer";
 
     const user = await User.create({
@@ -89,8 +83,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// Profile (also used by the frontend to refresh user state after
-// a role change, e.g. after the writer-verification payment succeeds)
+
 router.get("/profile", verifyToken, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -112,24 +105,7 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
-// Google Login
-//
-// ⚠️ SECURITY NOTE (not fully fixed here, flagging it clearly):
-// This route currently trusts whatever {name, email, photo} the client
-// sends, with no verification that the caller actually owns that Google
-// account. As written, anyone could POST { "email": "admin@fable.com" }
-// directly to this endpoint (e.g. with curl/Postman) and get back a valid
-// JWT for that account. The safe fix is to send the Google ID token (not
-// the decoded profile) to this route and verify it server-side with
-// google-auth-library:
-//
-//   const { OAuth2Client } = require("google-auth-library");
-//   const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-//   const ticket = await client.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID });
-//   const payload = ticket.getPayload(); // trustworthy email/name here
-//
-// Left as-is for now to avoid widening the scope of this pass, but this
-// should be hardened before going to production with real user data.
+
 router.post("/google", async (req, res) => {
   try {
     const { name, email, photo } = req.body;

@@ -14,9 +14,6 @@ const PURCHASE_MATCH = {
   ],
 };
 
-// ===============================
-// TOP WRITERS (PUBLIC)
-// ===============================
 router.get("/top-writers", async (req, res) => {
   try {
     const topWriters = await Purchase.aggregate([
@@ -103,9 +100,7 @@ router.get("/top-writers", async (req, res) => {
   }
 });
 
-// ===============================
-// ALL USERS (ADMIN)
-// ===============================
+
 router.get(
   "/",
   verifyToken,
@@ -128,9 +123,7 @@ router.get(
     }
   }
 );
-// ===============================
-// ANALYTICS (ADMIN)
-// ===============================
+
 router.get(
   "/analytics",
   verifyToken,

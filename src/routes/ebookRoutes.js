@@ -81,10 +81,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ======================
-// MY EBOOKS ROUTE
-// MUST BE BEFORE /:id
-// ======================
+
 router.get("/my-ebooks", verifyToken, async (req, res) => {
   try {
     const ebooks = await Ebook.find({
